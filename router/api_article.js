@@ -51,14 +51,31 @@ router.post('/write', (req, res) => {
   const sql = `insert into article(title, writer, content, reg_date) values (?, ?, ?, ?)`;
   connection.query(sql, [title, writer, content, now], (err, rows, fld) => {
     if(!err) {
-      console.log("done");
-      result = { success: 1 };
-      res.json(result);
+      result = { success: 1, return: rows[0] };
     } else {
       result = { success: 0, err: err };
-      res.json(result);
     }
+    res.json(result);
   });
 });
+
+/**
+ * update the Article
+ */
+router.put('/modify/:id', (req, res) => {
+  var result = {};
+  const { id } = req.params;
+  const { title, content } = req.body;
+  const now = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+  const sql = `update article set title = ?, content = ?, reg_date = ? where article_no = ?`;
+  connection.query(sql, [title, content, now, id], (err, rows, fld) => {
+    if(!err) {
+      result = { success: 1, ret: rows[0] };
+    } else {
+      result = { success: 0, err: err };
+    }
+    res.json(result);
+  })
+})
 
 module.exports = router;
