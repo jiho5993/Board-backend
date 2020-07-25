@@ -51,7 +51,7 @@ router.post('/write', (req, res) => {
   const sql = `insert into article(title, writer, content, reg_date) values (?, ?, ?, ?)`;
   connection.query(sql, [title, writer, content, now], (err, rows, fld) => {
     if(!err) {
-      result = { success: 1, return: rows[0] };
+      result = { success: 1 };
     } else {
       result = { success: 0, err: err };
     }
@@ -70,12 +70,29 @@ router.put('/modify/:id', (req, res) => {
   const sql = `update article set title = ?, content = ?, reg_date = ? where article_no = ?`;
   connection.query(sql, [title, content, now, id], (err, rows, fld) => {
     if(!err) {
-      result = { success: 1, ret: rows[0] };
+      result = { success: 1 };
     } else {
       result = { success: 0, err: err };
     }
     res.json(result);
-  })
-})
+  });
+});
+
+/**
+ * delete the Article
+ */
+router.delete('/delete/:id', (req, res) => {
+  var result = {};
+  const { id } = req.params;
+  const sql = `delete from article where article_no = ?`;
+  connection.query(sql, [id], (err, rows, fld) => {
+    if(!err) {
+      result = { success: 1 };
+    } else {
+      result = { success: 0, err: err };
+    }
+    res.json(result);
+  });
+});
 
 module.exports = router;
