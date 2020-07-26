@@ -12,7 +12,7 @@ var connection = mysql_dbc.init();
  * login api
  */
 router.get('/login', (req, res) => {
-  var { userid, password } = req.body;
+  var { userid, password } = req.query;
   const sql = `select userid, password, username, nickname from user where userid = ? and password = ?`;
   connection.query(sql, [userid, password], (err, rows) => {
     if(!err) {
