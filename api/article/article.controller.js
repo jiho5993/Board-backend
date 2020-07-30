@@ -1,34 +1,31 @@
-var express = require('express');
 var moment = require('moment');
-var router = express.Router();
 
 /**
- * Mysql Connection module call
- * @type {{init: (function(): Connection), test: test}}
+ * mysql connection
  */
-var mysql_dbc = require('../config/mysql-config')();
+var mysql_dbc = require('../../config/mysql-config')();
 var connection = mysql_dbc.init();
 mysql_dbc.test(connection);
 
+
 /**
- * get the Article_list
+ * GET: get the Article_list
  */
-router.get('/list', (req, res) => {
+exports.getList = (req, res) => {
   const sql = `select * from article`;
   connection.query(sql, (err, rows, fld) => {
     if(!err) {
-      console.log(rows);
       res.json(rows);
     } else {
       console.log('list get ERR' + err);
     }
   });
-});
+};
 
 /**
- * read the Article
+ * GET: read the Article
  */
-router.get('/read/:id', (req, res) => {
+exports.getArticle = (req, res) => {
   const articleNo = req.params.id;
   const sql = `select * from article where article_no = ?`;
   connection.query(sql, [articleNo], (err, rows, fld) => {
@@ -39,12 +36,12 @@ router.get('/read/:id', (req, res) => {
       console.log('read get ERR' + err);
     }
   });
-});
+};
 
 /**
- * write the Article
+ * POST: write the Article
  */
-router.post('/write', (req, res) => {
+exports.writeArticle = (req, res) => {
   var result = {};
   const { title, writer, content } = req.body;
   const now = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
@@ -57,12 +54,12 @@ router.post('/write', (req, res) => {
     }
     res.json(result);
   });
-});
+};
 
 /**
- * update the Article
+ * PUT: update the Article
  */
-router.put('/modify/:id', (req, res) => {
+exports.modifyArticle = (req, res) => {
   var result = {};
   const { id } = req.params;
   const { title, content } = req.body;
@@ -76,12 +73,12 @@ router.put('/modify/:id', (req, res) => {
     }
     res.json(result);
   });
-});
+};
 
 /**
- * delete the Article
+ * DELETE: delete the Article
  */
-router.delete('/delete/:id', (req, res) => {
+exports.deleteArticle = (req, res) => {
   var result = {};
   const { id } = req.params;
   const sql = `delete from article where article_no = ?`;
@@ -93,6 +90,4 @@ router.delete('/delete/:id', (req, res) => {
     }
     res.json(result);
   });
-});
-
-module.exports = router;
+};

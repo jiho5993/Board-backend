@@ -15,15 +15,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-var MySQLSession = require('./config/mysql-session')(app);
 
 /**
  * router api
+ * article: /api/article/*
+ * auth: /api/auth/*
  */
-var apiRouter = require('./router/api_article');
-var apiUser = require('./router/api_user');
-app.use('/api_article', apiRouter);
-app.use('/api_user', apiUser);
+var api = require('./api/index');
+app.use('/api', api);
 
 /**
  * error status(404, 500)

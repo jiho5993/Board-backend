@@ -1,4 +1,3 @@
 .idea
 config/mysql-config.js
-config/mysql-session.js
 node_modules
