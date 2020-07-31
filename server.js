@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 var cors = require('cors');
 
 var app = express();
-var port = 3001;
+var port = process.env.PORT || 3000;
 
 /**
  * middleware

@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "nodemon server.js"
+    "test": "nodemon server.js",
+    "start": "set PORT=3030 & nodemon server.js"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
