@@ -4,8 +4,11 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var cors = require('cors');
 
+var jwt_config = require('./config/jwt-config');
 var app = express();
 var port = process.env.PORT || 3000;
+
+app.set('jwt-secret', jwt_config.secret);
 
 /**
  * middleware
@@ -21,7 +24,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
  * article: /api/article/*
  * auth: /api/auth/*
  */
-var api = require('./api/index');
+var api = require('./router');
 app.use('/api', api);
 
 /**

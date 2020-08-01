@@ -3,7 +3,7 @@ var moment = require('moment');
 /**
  * mysql connection
  */
-var mysql_dbc = require('../../config/mysql-config')();
+var mysql_dbc = require('../../../config/mysql-config')();
 var connection = mysql_dbc.init();
 mysql_dbc.test(connection);
 
