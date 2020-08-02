@@ -8,8 +8,8 @@ var connection = mysql_dbc.init();
 mysql_dbc.test(connection);
 
 
-/**
- * GET: get the Article_list
+/*
+  GET /api/article/list
  */
 exports.getList = (req, res) => {
   const sql = `select * from article`;
@@ -22,8 +22,8 @@ exports.getList = (req, res) => {
   });
 };
 
-/**
- * GET: read the Article
+/*
+  GET /api/article/read/:id
  */
 exports.getArticle = (req, res) => {
   const articleNo = req.params.id;
@@ -38,8 +38,13 @@ exports.getArticle = (req, res) => {
   });
 };
 
-/**
- * POST: write the Article
+/*
+  POST /api/article/write
+  {
+    title,
+    writer,
+    content
+  }
  */
 exports.writeArticle = (req, res) => {
   var result = {};
@@ -56,8 +61,8 @@ exports.writeArticle = (req, res) => {
   });
 };
 
-/**
- * PUT: update the Article
+/*
+  PUT /api/article/modify/:id
  */
 exports.modifyArticle = (req, res) => {
   var result = {};
@@ -75,8 +80,8 @@ exports.modifyArticle = (req, res) => {
   });
 };
 
-/**
- * DELETE: delete the Article
+/*
+  DELETE /api/article/delete/:id
  */
 exports.deleteArticle = (req, res) => {
   var result = {};
