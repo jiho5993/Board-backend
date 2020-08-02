@@ -1,5 +1,4 @@
 var jwt = require('jsonwebtoken');
-var jwtSecret = 'SeCrEtNuMbEr';
 
 /**
  * mysql connection
@@ -50,7 +49,7 @@ exports.login = (req, res) => {
       connection.query(qr, [uid], (err, user) => {
         if(err) {
           reject(new Error("login failed"));
-        } else if(!user) {
+        } else if(!user[0]) {
           reject(new Error("id is not exist"));
         } else if(user[0].password !== pwd) {
           reject(new Error("password is wrong"));
@@ -71,7 +70,7 @@ exports.login = (req, res) => {
         },
         secret,
         {
-          expiresIn: '5m',
+          expiresIn: '10m',
           subject: "userInfo"
         }, (err, token) => {
           if(err) reject(err);
