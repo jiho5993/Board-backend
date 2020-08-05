@@ -84,15 +84,39 @@ exports.modifyArticle = (req, res) => {
   DELETE /api/article/delete/:id
  */
 exports.deleteArticle = (req, res) => {
-  var result = {};
   const { id } = req.params;
-  const sql = `delete from article where article_no = ?`;
-  connection.query(sql, [id], (err, rows, fld) => {
-    if(!err) {
-      result = { success: 1 };
+  const article_qr = `delete from reply where article_no = ?`;
+  connection.query(article_qr, [id], (err_1, reply) => {
+    if(!err_1) {
+      const reply_qr = `delete from article where article_no = ?`;
+      connection.query(reply_qr, [id], (err_2, article) => {
+        if(!err_2) {
+          res.json({ success: 1 });
+        } else {
+          res.json({
+            success: 0,
+            error: err_2
+          });
+        }
+      });
     } else {
-      result = { success: 0, err: err };
+      res.json({
+        success: 0,
+        error: err_1
+      });
     }
-    res.json(result);
   });
+};
+
+
+/*
+  GET /api/article/search
+  query {
+    title,
+    writer,
+    content
+  }
+ */
+exports.search = (req, res) => {
+
 };
