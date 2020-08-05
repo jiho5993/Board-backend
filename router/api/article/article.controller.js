@@ -118,5 +118,38 @@ exports.deleteArticle = (req, res) => {
   }
  */
 exports.search = (req, res) => {
-
+  const { type, search } = req.query;
+  console.log(type, search);
+  const new_search = '%' + search + '%';
+  if(type === "everything") { // title, writer, content
+    const qr = `select * from article where title like ? or writer like ? or content like ?`;
+    connection.query(qr, [new_search, new_search, new_search], (err, article) => {
+      if(!err) {
+        res.json({
+          success: 1,
+          article: article
+        });
+      } else {
+        res.json({
+          success: 0,
+          error: err
+        });
+      }
+    });
+  } else {
+    const qr = `select * from article where ` + type + ` like ?`;
+    connection.query(qr, [new_search], (err, article) => {
+      if(!err) {
+        res.json({
+          success: 1,
+          article: article
+        });
+      } else {
+        res.json({
+          success: 0,
+          error: err
+        });
+      }
+    });
+  }
 };
