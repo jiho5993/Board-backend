@@ -23,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
  * router api
  * article: /api/article/*
  * auth: /api/auth/*
+ * reply: /api/reply/*
  */
 var api = require('./router');
 app.use('/api', api);

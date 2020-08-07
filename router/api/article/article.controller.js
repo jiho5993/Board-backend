@@ -112,18 +112,17 @@ exports.deleteArticle = (req, res) => {
 /*
   GET /api/article/search
   query {
-    title,
-    writer,
-    content
+    type,
+    keyword
   }
  */
 exports.search = (req, res) => {
-  const { type, search } = req.query;
-  console.log(type, search);
-  const new_search = '%' + search + '%';
+  const { type, keyword } = req.query;
+  console.log(type, keyword);
+  const new_keyword = '%' + keyword + '%';
   if(type === "everything") { // title, writer, content
     const qr = `select * from article where title like ? or writer like ? or content like ?`;
-    connection.query(qr, [new_search, new_search, new_search], (err, article) => {
+    connection.query(qr, [new_keyword, new_keyword, new_keyword], (err, article) => {
       if(!err) {
         res.json({
           success: 1,
@@ -138,7 +137,7 @@ exports.search = (req, res) => {
     });
   } else {
     const qr = `select * from article where ` + type + ` like ?`;
-    connection.query(qr, [new_search], (err, article) => {
+    connection.query(qr, [new_keyword], (err, article) => {
       if(!err) {
         res.json({
           success: 1,
