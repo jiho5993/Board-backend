@@ -6,7 +6,7 @@ var cors = require("cors");
 
 var jwt_config = require("./config/jwt-config");
 var app = express();
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 8080;
 
 app.set("jwt-secret", jwt_config.secret);
 
