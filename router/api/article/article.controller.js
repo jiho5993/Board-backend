@@ -11,10 +11,10 @@ mysql_dbc.test(connection);
   GET /api/article/list
  */
 exports.getList = (req, res) => {
-    const sql = `select * from article`;
-    connection.query(sql, (err, rows, fld) => {
+    const sql = `select * from article order by article_no desc`;
+    connection.query(sql, (err, rows) => {
         if (!err) {
-            res.json(rows);
+            return res.json(rows);
         } else {
             console.log("list get ERR" + err);
         }
@@ -26,15 +26,26 @@ exports.getList = (req, res) => {
  */
 exports.getArticle = (req, res) => {
     const articleNo = req.params.id;
-    const sql = `select * from article where article_no = ?`;
-    connection.query(sql, [articleNo], (err, rows, fld) => {
+    const read_sql = `select * from article where article_no = ?`;
+    connection.query(read_sql, [articleNo], (err, rows) => {
         if (!err) {
             console.log(rows);
-            res.json(rows);
+            incViewCount(articleNo, rows[0].view_cnt, rows);
         } else {
             console.log("read get ERR" + err);
         }
     });
+
+    const incViewCount = (id, view_cnt, result) => {
+        const view_sql = `update article set view_cnt = ? where article_no = ?`;
+        connection.query(view_sql, [view_cnt+1, id], (err) => {
+            if(!err) {
+                res.json(result);
+            } else {
+                console.log(err);
+            }
+        })
+    }
 };
 
 /*
@@ -50,7 +61,7 @@ exports.writeArticle = (req, res) => {
     const { title, writer, content } = req.body;
     const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
     const sql = `insert into article(title, writer, content, reg_date) values (?, ?, ?, ?)`;
-    connection.query(sql, [title, writer, content, now], (err, rows, fld) => {
+    connection.query(sql, [title, writer, content, now], (err) => {
         if (!err) {
             result = { success: 1 };
         } else {
@@ -69,7 +80,7 @@ exports.modifyArticle = (req, res) => {
     const { title, content } = req.body;
     const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
     const sql = `update article set title = ?, content = ?, reg_date = ? where article_no = ?`;
-    connection.query(sql, [title, content, now, id], (err, rows, fld) => {
+    connection.query(sql, [title, content, now, id], (err) => {
         if (!err) {
             result = { success: 1 };
         } else {
@@ -85,10 +96,10 @@ exports.modifyArticle = (req, res) => {
 exports.deleteArticle = (req, res) => {
     const { id } = req.params;
     const article_qr = `delete from reply where article_no = ?`;
-    connection.query(article_qr, [id], (err_1, reply) => {
+    connection.query(article_qr, [id], (err_1) => {
         if (!err_1) {
             const reply_qr = `delete from article where article_no = ?`;
-            connection.query(reply_qr, [id], (err_2, article) => {
+            connection.query(reply_qr, [id], (err_2) => {
                 if (!err_2) {
                     res.json({ success: 1 });
                 } else {
