@@ -8,13 +8,37 @@ var connection = mysql_dbc.init();
 mysql_dbc.test(connection);
 
 /*
+    GET /api/article/count
+ */
+exports.getCount = (req, res) => {
+    const sql = `select count(*) as count from article`;
+    connection.query(sql, (err, article) => {
+        if(!err) {
+            res.json({
+                success: 1,
+                data: article[0]
+            });
+        } else {
+            res.json({
+                success: 0,
+                error: err
+            });
+        }
+    });
+}
+
+/*
   GET /api/article/list
+  {
+    page
+  }
  */
 exports.getList = (req, res) => {
-    const sql = `select * from article order by article_no desc`;
-    connection.query(sql, (err, rows) => {
+    const { page } = req.query;
+    const sql = `select * from article order by article_no desc limit ?, 15`;
+    connection.query(sql, [(page-1)*15], (err, rows) => {
         if (!err) {
-            return res.json(rows);
+            res.json(rows);
         } else {
             console.log("list get ERR" + err);
         }
@@ -131,7 +155,7 @@ exports.search = (req, res) => {
     const new_keyword = "%" + keyword + "%";
     if (type === "everything") {
         // title, writer, content
-        const qr = `select * from article where title like ? or writer like ? or content like ?`;
+        const qr = `select * from article where title like ? or writer like ? or content like ? order by article_no desc`;
         connection.query(
             qr,
             [new_keyword, new_keyword, new_keyword],
@@ -150,7 +174,7 @@ exports.search = (req, res) => {
             }
         );
     } else {
-        const qr = `select * from article where ` + type + ` like ?`;
+        const qr = `select * from article where ` + type + ` like ? order by article_no desc`;
         connection.query(qr, [new_keyword], (err, article) => {
             if (!err) {
                 res.json({

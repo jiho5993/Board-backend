@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const article = require("./article.controller");
 
+router.get("/count", article.getCount);
 router.get("/list", article.getList);
 router.get("/read/:id", article.getArticle);
 router.post("/write", article.writeArticle);
