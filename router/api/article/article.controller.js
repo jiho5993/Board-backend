@@ -19,28 +19,23 @@ exports.getCount = (req, res) => {
                 data: article[0]
             });
         } else {
-            res.json({
-                success: 0,
-                error: err
-            });
+            res.status(400).json({ error: err });
         }
     });
 }
 
 /*
-  GET /api/article/list
-  {
-    page
-  }
+  GET /api/article/list?page=?
  */
 exports.getList = (req, res) => {
-    const { page } = req.query;
+    let { page } = req.query;
+    if(/^\d+$/.test(page) === false) page = 1;
     const sql = `select * from article order by article_no desc limit ?, 15`;
     connection.query(sql, [(page-1)*15], (err, rows) => {
         if (!err) {
             res.json(rows);
         } else {
-            console.log("list get ERR" + err);
+            res.status(400).json({ error: err });
         }
     });
 };
@@ -56,6 +51,7 @@ exports.getArticle = (req, res) => {
             console.log(rows);
             incViewCount(articleNo, rows[0].view_cnt, rows);
         } else {
+            res.status(400).json({ error: err });
             console.log("read get ERR" + err);
         }
     });
@@ -66,6 +62,7 @@ exports.getArticle = (req, res) => {
             if(!err) {
                 res.json(result);
             } else {
+                res.status(400).json({ error: err });
                 console.log(err);
             }
         })
@@ -81,17 +78,15 @@ exports.getArticle = (req, res) => {
   }
  */
 exports.writeArticle = (req, res) => {
-    var result = {};
     const { title, writer, content } = req.body;
     const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
     const sql = `insert into article(title, writer, content, reg_date) values (?, ?, ?, ?)`;
     connection.query(sql, [title, writer, content, now], (err) => {
         if (!err) {
-            result = { success: 1 };
+            res.status(201).json({ success: 1 });
         } else {
-            result = { success: 0, err: err };
+            res.status(400).json({ error: err });
         }
-        res.json(result);
     });
 };
 
@@ -99,18 +94,16 @@ exports.writeArticle = (req, res) => {
   PUT /api/article/modify/:id
  */
 exports.modifyArticle = (req, res) => {
-    var result = {};
     const { id } = req.params;
     const { title, content } = req.body;
     const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
     const sql = `update article set title = ?, content = ?, reg_date = ? where article_no = ?`;
     connection.query(sql, [title, content, now, id], (err) => {
         if (!err) {
-            result = { success: 1 };
+            res.status(201).json({ success: 1 });
         } else {
-            result = { success: 0, err: err };
+            res.status(400).json({ error: err });
         }
-        res.json(result);
     });
 };
 
@@ -125,16 +118,16 @@ exports.deleteArticle = (req, res) => {
             const reply_qr = `delete from article where article_no = ?`;
             connection.query(reply_qr, [id], (err_2) => {
                 if (!err_2) {
-                    res.json({ success: 1 });
+                    res.status(204).json({ success: 1 });
                 } else {
-                    res.json({
+                    res.status(400).json({
                         success: 0,
                         error: err_2,
                     });
                 }
             });
         } else {
-            res.json({
+            res.status(400).json({
                 success: 0,
                 error: err_1,
             });
@@ -166,7 +159,7 @@ exports.search = (req, res) => {
                         article: article,
                     });
                 } else {
-                    res.json({
+                    res.status(400).json({
                         success: 0,
                         error: err,
                     });
@@ -182,7 +175,7 @@ exports.search = (req, res) => {
                     article: article,
                 });
             } else {
-                res.json({
+                res.status(400).json({
                     success: 0,
                     error: err,
                 });

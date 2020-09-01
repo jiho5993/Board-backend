@@ -23,9 +23,9 @@ exports.register = (req, res) => {
         [userid, password, username, nickname],
         (err, rows, fld) => {
             if (!err) {
-                res.json({ success: 1, data: rows[0] });
+                res.status(201).json({ success: 1, data: rows[0] });
             } else {
-                res.json({
+                res.status(400).json({
                     success: 0,
                     error: err,
                 });
