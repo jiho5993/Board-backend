@@ -29,7 +29,6 @@ exports.getCount = (req, res) => {
  */
 exports.getList = (req, res) => {
     let { page } = req.query;
-    if(/^\d+$/.test(page) === false) page = 1;
     const sql = `select * from article order by article_no desc limit ?, 15`;
     connection.query(sql, [(page-1)*15], (err, rows) => {
         if (!err) {
