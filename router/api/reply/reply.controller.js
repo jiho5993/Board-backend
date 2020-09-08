@@ -35,7 +35,7 @@ exports.write = (req, res) => {
  */
 exports.list = (req, res) => {
     const id = req.params.id;
-    const list_qr = `select nickname, content, reg_date from reply where article_no = ?`;
+    const list_qr = `select reply_no, nickname, content, reg_date from reply where article_no = ?`;
     connection.query(list_qr, [id], (err_1, replyList) => {
         if (err_1) {
             res.status(400).json({
@@ -57,6 +57,26 @@ exports.list = (req, res) => {
                         reply: replyList,
                     });
                 }
+            });
+        }
+    });
+};
+
+/*
+  GET /api/reply/get_reply/:id
+*/
+exports.getOneReply = (req, res) => {
+    const id = req.params.id;
+    const qr = `select content from reply where reply_no = ?`;
+    connection.query(qr, [id], (err, reply) => {
+        if(err) {
+            res.status(400).json({
+                success: 0,
+                error: err
+            });
+        } else {
+            res.json({
+                content: reply[0].content
             });
         }
     });
