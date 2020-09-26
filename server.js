@@ -3,6 +3,7 @@ var logger = require("morgan");
 var path = require("path");
 var bodyParser = require("body-parser");
 var cors = require("cors");
+var dotenv = require("dotenv").config();
 
 var jwt_config = require("./config/jwt-config");
 var app = express();
