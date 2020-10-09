@@ -1,10 +1,16 @@
 var jwt = require("jsonwebtoken");
+var crypto = require("crypto");
 
 /**
  * mysql connection
  */
 var mysql_dbc = require("../../../config/mysql-config")();
 var connection = mysql_dbc.init();
+
+const hexEncryption = (data) => {
+    const digest = crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash('sha256').update(digest).digest('hex');
+};
 
 /*
   POST /api/auth/register
@@ -20,7 +26,7 @@ exports.register = (req, res) => {
     const qr = `insert into user(userid, password, username, nickname) values(?, ?, ?, ?)`;
     connection.query(
         qr,
-        [userid, password, username, nickname],
+        [userid, hexEncryption(password), username, nickname],
         (err, rows, fld) => {
             if (!err) {
                 res.status(201).json({ success: 1, data: rows[0] });
@@ -53,7 +59,7 @@ exports.login = (req, res) => {
                     reject(new Error("login failed"));
                 } else if (!user[0]) {
                     reject(new Error("id is not exist"));
-                } else if (user[0].password !== pwd) {
+                } else if (user[0].password !== hexEncryption(pwd)) {
                     reject(new Error("password is wrong"));
                 } else {
                     resolve(user[0]);
