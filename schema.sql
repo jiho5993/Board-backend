@@ -34,6 +34,8 @@ create table user (
     primary key(userid)
 ) engine=InnoDB default charset=utf8;
 
+alter table user modify password char(64);
+
 insert into user(userid, password, username, nickname) values ("test", "1234", "tester", "ttt");
 insert into user(userid, password, username, nickname) values ("ex", "1234", "ex1", "eee");
 
