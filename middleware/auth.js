@@ -10,7 +10,7 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  const p = new Promise((resolve, reject) => {
+  const issueToken = new Promise((resolve, reject) => {
     jwt.verify(token, req.app.get("jwt-secret"), (err, decoded) => {
       if (err) reject(err);
       resolve(decoded);
@@ -24,7 +24,7 @@ const authMiddleware = (req, res, next) => {
     });
   };
 
-  p.then((decoded) => {
+  issueToken.then((decoded) => {
     req.decoded = decoded;
     next();
   }).catch(onError);

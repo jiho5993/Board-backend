@@ -68,7 +68,7 @@ exports.login = (req, res) => {
     });
   };
 
-  const p = (user) => {
+  const issueToken = (user) => {
     return new Promise((resolve, reject) => {
       jwt.sign(
         {
@@ -102,7 +102,7 @@ exports.login = (req, res) => {
     });
   };
 
-  check(userid, password).then(p).then(respond).catch(onError);
+  check(userid, password).then(issueToken).then(respond).catch(onError);
 };
 
 /*
