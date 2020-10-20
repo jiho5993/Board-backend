@@ -1,11 +1,6 @@
 var jwt = require("jsonwebtoken");
 var crypto = require("crypto");
-
-/**
- * mysql connection
- */
-var mysql_dbc = require("../../../config/mysql-config")();
-var connection = mysql_dbc.init();
+const { User } = require('../../../models');
 
 const hexEncryption = (data) => {
   const digest = crypto.createHash("sha256").update(data).digest("hex");
@@ -21,23 +16,20 @@ const hexEncryption = (data) => {
     nickname
   }
  */
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const { userid, password, username, nickname } = req.body;
-  const qr = `insert into user(userid, password, username, nickname) values(?, ?, ?, ?)`;
-  connection.query(
-    qr,
-    [userid, hexEncryption(password), username, nickname],
-    (err, rows, fld) => {
-      if (!err) {
-        res.status(201).json({ success: 1, data: rows[0] });
-      } else {
-        res.status(400).json({
-          success: 0,
-          error: err,
-        });
-      }
-    }
-  );
+
+  try {
+    await User.create({
+      userid,
+      password: hexEncryption(password),
+      username,
+      nickname
+    });
+    res.status(201).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({ success: 0, error: err });
+  }
 };
 
 /*
@@ -52,19 +44,23 @@ exports.login = (req, res) => {
   const secret = req.app.get("jwt-secret");
 
   const check = (uid, pwd) => {
-    return new Promise((resolve, reject) => {
-      const qr = `select userid, password, username, nickname from user where userid = ?`;
-      connection.query(qr, [uid], (err, user) => {
-        if (err) {
-          reject(new Error("login failed"));
-        } else if (!user[0]) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const user = await User.findOne({
+          where: {
+            userid: uid
+          }
+        });
+        if(user === null) {
           reject(new Error("id is not exist"));
-        } else if (user[0].password !== hexEncryption(pwd)) {
+        } else if(user.password !== hexEncryption(pwd)) {
           reject(new Error("password is wrong"));
         } else {
-          resolve(user[0]);
+          resolve(user);
         }
-      });
+      } catch(err) {
+        reject(new Error("login failed"));
+      }
     });
   };
 

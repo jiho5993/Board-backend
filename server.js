@@ -3,13 +3,21 @@ var logger = require("morgan");
 var path = require("path");
 var bodyParser = require("body-parser");
 var cors = require("cors");
-var dotenv = require("dotenv").config();
+require("dotenv").config();
 
-var jwt_config = require("./config/jwt-config");
+var { secret } = require("./config/jwt-config");
 var app = express();
 var port = process.env.PORT || 8080;
 
-app.set("jwt-secret", jwt_config.secret);
+const { sequelize } = require('./models');
+sequelize.sync().then(() => {
+  console.log('DB 연결 성공');
+}).catch(err => {
+  console.log('DB 연결 실패');
+  console.error(err);
+});
+
+app.set("jwt-secret", secret);
 
 /**
  * middleware

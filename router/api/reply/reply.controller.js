@@ -1,10 +1,5 @@
 var moment = require("moment");
-
-/**
- * mysql connection
- */
-var mysql_dbc = require("../../../config/mysql-config")();
-var connection = mysql_dbc.init();
+const { Reply } = require('../../../models');
 
 /*
   POST /api/reply/write
@@ -14,90 +9,80 @@ var connection = mysql_dbc.init();
     content
   }
  */
-exports.write = (req, res) => {
+exports.write = async (req, res) => {
   const { id, nickname, content } = req.body;
-  const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-  const qr = `insert into reply(article_no, nickname, content, reg_date) values (?, ?, ?, ?)`;
-  connection.query(qr, [id, nickname, content, now], (err, reply) => {
-    if (err) {
-      res.status(400).json({
-        success: 0,
-        error: err,
-      });
-    } else {
-      res.status(201).json({ success: 1 });
-    }
-  });
+  const reg_date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+
+  try {
+    await Reply.create({
+      article_no: id,
+      nickname,
+      content,
+      reg_date
+    });
+    res.status(201).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({
+      success: 0,
+      error: err,
+    });
+  }
 };
 
 /*
   GET /api/reply/list/:id
  */
-exports.list = (req, res) => {
+exports.list = async (req, res) => {
   const id = req.params.id;
-  const list_qr = `select reply_no, nickname, content, reg_date from reply where article_no = ?`;
-  connection.query(list_qr, [id], (err_1, replyList) => {
-    if (err_1) {
-      res.status(400).json({
-        success: 0,
-        error: err_1,
-      });
-    } else {
-      const cnt_qr = `select count(article_no) as count from reply where article_no = ?`;
-      connection.query(cnt_qr, [id], (err_2, cnt) => {
-        if (err_2) {
-          res.status(400).json({
-            success: 0,
-            error: err_2,
-          });
-        } else {
-          res.json({
-            success: 1,
-            count: cnt[0].count,
-            reply: replyList,
-          });
-        }
-      });
-    }
-  });
+
+  try {
+    const reply = await Reply.findAll({ where: { article_no: id } });
+    const count = await Reply.count({ where: { article_no: id } })
+    res.json({
+      success: 1,
+      count,
+      reply,
+    });
+  } catch(err) {
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
+  }
 };
 
 /*
   GET /api/reply/get_reply/:id
 */
-exports.getOneReply = (req, res) => {
+exports.getOneReply = async (req, res) => {
   const id = req.params.id;
-  const qr = `select content from reply where reply_no = ?`;
-  connection.query(qr, [id], (err, reply) => {
-    if (err) {
-      res.status(400).json({
-        success: 0,
-        error: err,
-      });
-    } else {
-      res.json({
-        content: reply[0].content,
-      });
-    }
-  });
+
+  try {
+    const reply = await Reply.findOne({ where: { reply_no: id } });
+    res.json({ content: reply.content });
+  } catch(err) {
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
+  }
 };
 
 /*
   DELETE /api/reply/delete/:id
  */
-exports.deleteReply = (req, res) => {
+exports.deleteReply = async (req, res) => {
   const id = req.params.id;
-  const qr = `delete from reply where reply_no = ?`;
-  connection.query(qr, [id], (err) => {
-    if (err) {
-      res.status(400).json({
-        success: 0,
-        error: err,
-      });
-    } else {
-      res.status(204).json({ success: 1 });
-    }
-  });
+
+  try {
+    await Reply.destroy({ where: { reply_no: id } });
+    res.status(204).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
+  }
 };
 
 /*
@@ -107,20 +92,16 @@ exports.deleteReply = (req, res) => {
     content
   }
  */
-exports.modifyReply = (req, res) => {
+exports.modifyReply = async (req, res) => {
   const { reply_no, content } = req.body;
-  const qr = `update reply set content = ? where reply_no = ?`;
-  connection.query(qr, [content, reply_no], (err, rep) => {
-    if (err) {
-      res.status(400).json({
-        success: 0,
-        error: err,
-      });
-    } else {
-      res.status(201).json({
-        success: 1,
-        result: rep,
-      });
-    }
-  });
+
+  try {
+    await Reply.update({ content }, { where: { reply_no } });
+    res.status(201).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
+  }
 };

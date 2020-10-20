@@ -1,71 +1,70 @@
 var moment = require("moment");
-
-/**
- * mysql connection
- */
-var mysql_dbc = require("../../../config/mysql-config")();
-var connection = mysql_dbc.init();
-mysql_dbc.test(connection);
+const { Article, Reply } = require('../../../models');
+const { Op } = require('sequelize');
 
 /*
     GET /api/article/count
  */
-exports.getCount = (req, res) => {
-  const sql = `select count(*) as count from article`;
-  connection.query(sql, (err, article) => {
-    if (!err) {
-      res.json({
-        success: 1,
-        data: article[0],
-      });
-    } else {
-      res.status(400).json({ error: err });
-    }
-  });
+exports.getCount = async (req, res) => {
+  try {
+    const count = await Article.count();
+    res.json({
+      success: 1,
+      count,
+    });
+  } catch(err) {
+    res.status(400).json({ error: err });
+  }
 };
 
 /*
   GET /api/article/list?page=?
  */
-exports.getList = (req, res) => {
+exports.getList = async (req, res) => {
   let { page } = req.query;
-  const sql = `select * from article order by article_no desc limit ?, 15`;
-  connection.query(sql, [(page - 1) * 15], (err, rows) => {
-    if (!err) {
-      res.json(rows);
-    } else {
-      res.status(400).json({ error: err });
-    }
-  });
+
+  try {
+    const article = await Article.findAll({
+      offset: (page-1)*15,
+      limit: 15,
+      order: [
+        ['article_no', 'DESC']
+      ]
+    });
+    res.json(article);
+  } catch(err) {
+    res.status(400).json({ error: err });
+  }
 };
 
 /*
   GET /api/article/read/:id
  */
-exports.getArticle = (req, res) => {
+exports.getArticle = async (req, res) => {
   const articleNo = req.params.id;
-  const read_sql = `select * from article where article_no = ?`;
-  connection.query(read_sql, [articleNo], (err, rows) => {
-    if (!err) {
-      console.log(rows);
-      incViewCount(articleNo, rows[0].view_cnt, rows);
-    } else {
-      res.status(400).json({ error: err });
-      console.log("read get ERR" + err);
-    }
-  });
+  let transaction = null;
 
-  const incViewCount = (id, view_cnt, result) => {
-    const view_sql = `update article set view_cnt = ? where article_no = ?`;
-    connection.query(view_sql, [view_cnt + 1, id], (err) => {
-      if (!err) {
-        res.json(result);
-      } else {
-        res.status(400).json({ error: err });
-        console.log(err);
+  try {
+    transaction = await Article.sequelize.transaction();
+    const article = await Article.findOne({
+      where: {
+        article_no: articleNo
       }
-    });
-  };
+    }, { transaction });
+    const { view_cnt } = article.dataValues;
+    await Article.update({
+      view_cnt: view_cnt + 1
+    }, {
+      where: {
+        article_no: articleNo
+      }
+    }, { transaction });
+    transaction.commit();
+    res.json(article);
+  } catch(err) {
+    transaction.rollback();
+    res.status(400).json({ error: err });
+  }
 };
 
 /*
@@ -76,112 +75,107 @@ exports.getArticle = (req, res) => {
     content
   }
  */
-exports.writeArticle = (req, res) => {
+exports.writeArticle = async (req, res) => {
   const { title, writer, content } = req.body;
-  const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-  const sql = `insert into article(title, writer, content, reg_date) values (?, ?, ?, ?)`;
-  connection.query(sql, [title, writer, content, now], (err) => {
-    if (!err) {
-      res.status(201).json({ success: 1 });
-    } else {
-      res.status(400).json({ error: err });
-    }
-  });
+  const reg_date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+
+  try {
+    await Article.create({ title, writer, content, reg_date });
+    res.status(201).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({ error: err });
+  }
 };
 
 /*
   PUT /api/article/modify/:id
+  {
+    title,
+    content
+  }
  */
-exports.modifyArticle = (req, res) => {
+exports.modifyArticle = async (req, res) => {
   const { id } = req.params;
   const { title, content } = req.body;
-  const now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-  const sql = `update article set title = ?, content = ?, reg_date = ? where article_no = ?`;
-  connection.query(sql, [title, content, now, id], (err) => {
-    if (!err) {
-      res.status(201).json({ success: 1 });
-    } else {
-      res.status(400).json({ error: err });
-    }
-  });
+  const reg_date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+
+  try {
+    await Article.update({ title, content, reg_date }, { where: { article_no: id } });
+    res.status(201).json({ success: 1 });
+  } catch(err) {
+    res.status(400).json({ error: err });
+  }
 };
 
 /*
   DELETE /api/article/delete/:id
  */
-exports.deleteArticle = (req, res) => {
+exports.deleteArticle = async (req, res) => {
   const { id } = req.params;
-  const article_qr = `delete from reply where article_no = ?`;
-  connection.query(article_qr, [id], (err_1) => {
-    if (!err_1) {
-      const reply_qr = `delete from article where article_no = ?`;
-      connection.query(reply_qr, [id], (err_2) => {
-        if (!err_2) {
-          res.status(204).json({ success: 1 });
-        } else {
-          res.status(400).json({
-            success: 0,
-            error: err_2,
-          });
-        }
-      });
-    } else {
-      res.status(400).json({
-        success: 0,
-        error: err_1,
-      });
-    }
-  });
+  let transaction = null;
+
+  try {
+    transaction = await Article.sequelize.transaction();
+    await Reply.destroy({
+      where: {
+        article_no: id
+      }
+    }, { transaction });
+    await Article.destroy({
+      where: {
+        article_no: id
+      }
+    }, { transaction });
+    transaction.commit();
+    res.status(204).json({ success: 1 });
+  } catch(err) {
+    transaction.rollback();
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
+  }
 };
 
 /*
-  GET /api/article/search
-  query {
-    type,
-    keyword
-  }
+  GET /api/article/search?type=?&keyword=?
  */
-exports.search = (req, res) => {
+exports.search = async (req, res) => {
   const { type, keyword } = req.query;
   console.log(type, keyword);
   const new_keyword = "%" + keyword + "%";
-  if (type === "everything") {
-    // title, writer, content
-    const qr = `select * from article where title like ? or writer like ? or content like ? order by article_no desc`;
-    connection.query(
-      qr,
-      [new_keyword, new_keyword, new_keyword],
-      (err, article) => {
-        if (!err) {
-          res.json({
-            success: 1,
-            article: article,
-          });
-        } else {
-          res.status(400).json({
-            success: 0,
-            error: err,
-          });
+
+  try {
+    let article = {};
+    if(type === "everything") {
+      article = await Article.findAll({
+        where: {
+          [Op.or]: [{
+            title: {
+              [Op.like]: new_keyword
+            }
+          }, {
+            writer: {
+              [Op.like]: new_keyword
+            }
+          }, {
+            content: {
+              [Op.like]: new_keyword
+            }
+          }]
         }
-      }
-    );
-  } else {
-    const qr =
-      `select * from article where ` +
-      type +
-      ` like ? order by article_no desc`;
-    connection.query(qr, [new_keyword], (err, article) => {
-      if (!err) {
-        res.json({
-          success: 1,
-          article: article,
-        });
-      } else {
-        res.status(400).json({
-          success: 0,
-          error: err,
-        });
-      }
-    });
+      }, {
+        order: [
+          ['article_no', 'DESC']
+        ]
+      });
+    } else {
+      const cond = {};
+      cond[type] = { [Op.like]: new_keyword };
+      article = await Article.findAll({ where: cond });
+    }
+    res.json({ success: 1, article });
+  } catch(err) {
+    res.status(400).json({ success: 0, error: err });
   }
 };
