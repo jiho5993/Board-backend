@@ -52,7 +52,7 @@ exports.list = async (req, res) => {
 };
 
 /*
-  GET /api/reply/get_reply/:id
+  GET /api/reply/get-reply/:id
 */
 exports.getOneReply = async (req, res) => {
   const id = req.params.id;
