@@ -52,14 +52,14 @@ exports.login = (req, res) => {
           }
         });
         if(user === null) {
-          reject(new Error("id is not exist"));
+          reject(new Error("ID does not exist."));
         } else if(user.password !== hexEncryption(pwd)) {
-          reject(new Error("password is wrong"));
+          reject(new Error("Wrong password."));
         } else {
           resolve(user);
         }
       } catch(err) {
-        reject(new Error("login failed"));
+        reject(new Error("Login Failed"));
       }
     });
   };

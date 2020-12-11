@@ -103,7 +103,10 @@ exports.modifyArticle = async (req, res) => {
     await Article.update({ title, content, reg_date }, { where: { article_no: id } });
     res.status(201).json({ success: 1 });
   } catch(err) {
-    res.status(400).json({ error: err });
+    res.status(400).json({
+      success: 0,
+      error: err
+    });
   }
 };
 

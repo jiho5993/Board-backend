@@ -59,7 +59,10 @@ exports.getOneReply = async (req, res) => {
 
   try {
     const reply = await Reply.findOne({ where: { reply_no: id } });
-    res.json({ content: reply.content });
+    res.json({
+      success: 1,
+      content: reply.content
+    });
   } catch(err) {
     res.status(400).json({
       success: 0,
