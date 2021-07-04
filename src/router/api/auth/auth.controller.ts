@@ -75,14 +75,14 @@ export const login = (req: Request, res: Response) => {
         },
         secret,
         {
-          expiresIn: "10s"
+          expiresIn: "5m"
         }
       );
       let refreshToken = jwt.sign(
         {},
         secret,
         {
-          expiresIn: "20s"
+          expiresIn: "10m"
         }
       );
       resolve({accessToken, refreshToken, user});
@@ -96,11 +96,11 @@ export const login = (req: Request, res: Response) => {
     try {
       await user.update({ token: refreshToken } );
       res.cookie('accessToken', accessToken, {
-        maxAge: 1000*10,
+        maxAge: 1000*60*5,
         httpOnly: true
       });
       res.cookie('refreshToken', refreshToken, {
-        maxAge: 1000*20,
+        maxAge: 1000*60*10,
         httpOnly: true
       });
       res.status(200).json({ success: true });
