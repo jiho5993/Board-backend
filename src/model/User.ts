@@ -23,4 +23,8 @@ export class User extends Model<User> {
   @AllowNull(false)
   @Column
   nickname!: string;
+
+  @AllowNull(true)
+  @Column
+  token?: string;
 }

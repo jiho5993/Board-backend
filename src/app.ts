@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 import { SECRET_KEY } from './config/jwt.config';
 import { api } from './router';
 
+const expressSession = require('express-session');
+
 dotenv.config();
 export const app = express();
 
@@ -15,11 +17,22 @@ app.set('jwt-secret', SECRET_KEY);
 /**
  * middleware
  */
-app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+app.use(expressSession({
+  resave: true,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    httpOnly: true
+  }
+}));
 
 /**
  * router api

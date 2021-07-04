@@ -44,8 +44,8 @@ export const login = (req: Request, res: Response) => {
   const { userid, password } = req.body;
   const secret = req.app.get("jwt-secret");
 
-  const check = (uid: string, pwd: string) => {
-    return new Promise(async (resolve, reject) => {
+  const check = (uid: string, pwd: string): Promise<User> => {
+    return new Promise<User>(async (resolve, reject) => {
       try {
         const user = await User.findOne({
           where: {
@@ -53,56 +53,72 @@ export const login = (req: Request, res: Response) => {
           }
         });
         if(user === null) {
-          reject(new Error("ID does not exist."));
+          reject(new Error("등록되지 않은 유저입니다."));
         } else if(user.password !== hexEncryption(pwd)) {
-          reject(new Error("Wrong password."));
+          reject(new Error("잘못된 비밀번호입니다."));
         } else {
           resolve(user);
         }
-      } catch(err) {
-        reject(new Error("Login Failed"));
+      } catch (e) {
+        reject(e);
       }
     });
   };
 
-  const issueToken: any = (user: any) => {
+  const issueToken = (user: User) => {
     return new Promise((resolve, reject) => {
-      jwt.sign(
+      let accessToken = jwt.sign(
         {
-          userid: user.userid,
-          username: user.username,
-          nickname: user.nickname,
+          uid: user.userid,
+          name: user.username,
+          nickname: user.nickname
         },
         secret,
         {
-          expiresIn: "10m",
-          subject: "userInfo",
-        },
-        (err, token) => {
-          if (err) reject(err);
-          resolve(token);
+          expiresIn: "10s"
         }
       );
+      let refreshToken = jwt.sign(
+        {},
+        secret,
+        {
+          expiresIn: "20s"
+        }
+      );
+      resolve({accessToken, refreshToken, user});
     });
   };
 
-  const respond: any = (token: string) => {
-    res.json({
-      success: 1,
-      token,
-    });
-  };
+  const handlingToken = async (info: any) => {
+    const user: User = info.user;
+    const { accessToken, refreshToken } = info;
 
-  const onError = (error: any) => {
-    res.status(403).json({
-      message: error.message,
-    });
+    try {
+      await user.update({ token: refreshToken } );
+      res.cookie('accessToken', accessToken, {
+        maxAge: 1000*10,
+        httpOnly: true
+      });
+      res.cookie('refreshToken', refreshToken, {
+        maxAge: 1000*20,
+        httpOnly: true
+      });
+      res.status(200).json({ success: true });
+    } catch (e) {
+      console.error(e);
+      res.status(401).json({ success: false });
+    }
   };
 
   check(userid, password)
-  .then(issueToken)
-  .then(respond)
-  .catch(onError);
+    .then(issueToken)
+    .then(handlingToken)
+    .catch((e) => {
+      res.status(401).json({
+        success: false,
+        err: e.message
+      });
+    });
 };
 
 /*
@@ -110,7 +126,7 @@ export const login = (req: Request, res: Response) => {
  */
 export const check = (req: Request, res: Response) => {
   res.json({
-    success: 1,
+    success: true,
     info: req.decoded,
   });
 };
